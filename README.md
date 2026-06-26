@@ -221,13 +221,16 @@ iptables-save > /etc/iptables/rules.v4
 
 On the cloud firewall or PBX server itself:
 ```bash
+# Replace 172.16.x.x with your FreeSWITCH internal IP
+FS_INTERNAL_IP=$(fs_cli -x 'sofia status' 2>/dev/null | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1 || echo "127.0.0.1")
+echo "FreeSWITCH internal IP detected: ${FS_INTERNAL_IP}"
+
 # DNAT: public:6010 -> RingQ internal:5060
-iptables -t nat -A PREROUTING -p tcp --dport 6010 \
-  -j DNAT --to-destination 172.16.12.105:5060
+iptables -t nat -A PREROUTING -p tcp --dport 6010 -j DNAT --to-destination ${FS_INTERNAL_IP}:5060
 
 # Allow the forwarded traffic
-iptables -A FORWARD -p tcp --dport 5060 \
-  -d 172.16.12.105 -j ACCEPT
+iptables -A FORWARD -p tcp -d ${FS_INTERNAL_IP} --dport 5060 -j ACCEPT
+iptables-save > /etc/iptables/rules.v4
 ```
 
 ### 6.4 RingQ Tunnel Config (DB)
