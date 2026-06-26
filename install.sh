@@ -397,40 +397,65 @@ if $NEED_BUILD; then
     NEW_VER=$(git -C "${BUILD_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
     ok "Cloned at ${NEW_VER}"
 
-    info "Locating Go module root..."
-    GO_SRC="${BUILD_DIR}"
-    # Search for go.mod in root first, then subdirectories
-    if [[ ! -f "${GO_SRC}/go.mod" ]]; then
-        FOUND_MOD=$(find "${BUILD_DIR}" -name "go.mod" -maxdepth 3 -type f 2>/dev/null | head -1)
-        if [[ -n "${FOUND_MOD}" ]]; then
-            GO_SRC=$(dirname "${FOUND_MOD}")
-            info "Go module found in: ${GO_SRC}"
-        else
-            # go.mod not in repo -- check Go source files exist then auto-init
-            GO_FILE_COUNT=$(find "${BUILD_DIR}" -maxdepth 2 -name "*.go" 2>/dev/null | wc -l)
-            if [[ "${GO_FILE_COUNT}" -eq 0 ]]; then
-                error "No Go source files found in cloned repository."
-                error "Repo: ${REPO_URL}"
-                error "Ensure Go source files are committed and pushed."
-                exit 1
-            fi
-            warn "go.mod not found in repo -- auto-initialising Go module"
-            warn "(fix: push go.mod + go.sum from your build machine to ${REPO_URL})"
-            cd "${BUILD_DIR}"
-            # Detect module path from existing source or use default
-            MOD_NAME=$(grep -rh '^module ' "${BUILD_DIR}"/*.go 2>/dev/null | head -1 | awk '{print $2}' || echo "")
-            [[ -z "$MOD_NAME" ]] && MOD_NAME="github.com/ochinchina/sipproxy"
-            go mod init "${MOD_NAME}"
-            info "Running go mod tidy (downloading dependencies)..."
-            go mod tidy
-            GO_SRC="${BUILD_DIR}"
-        fi
-    fi
+    # - Decide: use pre-built binary or build from source -
+    # Priority:
+    #   1. Pre-built binary in repo root  -> copy directly (no Go needed)
+    #   2. Go source files in repo        -> build from source
+    #   3. Neither                        -> error with clear instructions
 
-    info "Building binary..."
-    cd "${GO_SRC}"
-    GOOS=linux GOARCH=$(go env GOARCH) \
-        go build -ldflags="-s -w" -o "${INSTALL_DIR}/${BINARY_NAME}.new" .
+    GO_FILE_COUNT=$(find "${BUILD_DIR}" -maxdepth 3 -name "*.go" 2>/dev/null | wc -l)
+    PREBUILT_BINARY=""
+    for candidate in "${BUILD_DIR}/${BINARY_NAME}" "${BUILD_DIR}/bin/${BINARY_NAME}"; do
+        if [[ -f "${candidate}" ]]; then
+            # Verify it is an ELF executable (not a shell script or text file)
+            file "${candidate}" 2>/dev/null | grep -qi 'ELF' && PREBUILT_BINARY="${candidate}" && break
+        fi
+    done
+
+    if [[ -n "${PREBUILT_BINARY}" && "${GO_FILE_COUNT}" -eq 0 ]]; then
+        # - Mode 1: Pre-built binary in repo, no source files -
+        info "Using pre-built binary from repository (no source files found)"
+        warn "To build from source in future, push .go files to: ${REPO_URL}"
+        cp "${PREBUILT_BINARY}" "${INSTALL_DIR}/${BINARY_NAME}.new"
+        chmod +x "${INSTALL_DIR}/${BINARY_NAME}.new"
+
+    elif [[ "${GO_FILE_COUNT}" -gt 0 ]]; then
+        # - Mode 2: Source files present -- build -
+        info "Source files found (${GO_FILE_COUNT} .go files) -- building..."
+        GO_SRC="${BUILD_DIR}"
+        if [[ ! -f "${GO_SRC}/go.mod" ]]; then
+            FOUND_MOD=$(find "${BUILD_DIR}" -name "go.mod" -maxdepth 3 -type f 2>/dev/null | head -1)
+            if [[ -n "${FOUND_MOD}" ]]; then
+                GO_SRC=$(dirname "${FOUND_MOD}")
+                info "Go module found in: ${GO_SRC}"
+            else
+                warn "go.mod missing -- auto-initialising module"
+                cd "${BUILD_DIR}"
+                go mod init github.com/ochinchina/sipproxy
+                go mod tidy
+                GO_SRC="${BUILD_DIR}"
+            fi
+        fi
+        cd "${GO_SRC}"
+        GOOS=linux GOARCH=$(go env GOARCH) \
+            go build -ldflags="-s -w" -o "${INSTALL_DIR}/${BINARY_NAME}.new" .
+
+    else
+        # - Mode 3: Nothing usable in repo -
+        error "Repository contains neither Go source files nor a pre-built binary."
+        error ""
+        error "To fix, push your source files from the build machine:"
+        error "  cd ~/nxagent"
+        error "  git remote add origin ${REPO_URL}"
+        error "  git add *.go go.mod go.sum"
+        error "  git commit -m 'add source'"
+        error "  git push -u origin master"
+        error ""
+        error "OR push the pre-built binary:"
+        error "  cp ~/nxagent/sipproxy ."
+        error "  git add sipproxy && git commit -m 'add binary' && git push"
+        exit 1
+    fi
 
     [[ -x "${INSTALL_DIR}/${BINARY_NAME}.new" ]] || { error "Build produced no executable"; exit 1; }
     BIN_SIZE=$(du -sh "${INSTALL_DIR}/${BINARY_NAME}.new" | cut -f1)
