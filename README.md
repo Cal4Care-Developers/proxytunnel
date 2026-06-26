@@ -270,10 +270,12 @@ Ensure:
 - **No port-forwarding for phones** -- phones talk to the NX Device on the LAN only
 
 ## 8. Installation Comment
-
 ```bash
-# First install -- interactive prompts
-sudo ./install.sh
+curl -fsSL https://raw.githubusercontent.com/Cal4Care-Developers/proxytunnel/master/install.sh -o /tmp/install.sh
+
+# Make executable and run
+chmod +x /tmp/install.sh
+sudo /tmp/install.sh
 
 # Re-run after partial failure -- uses existing config, skips unchanged steps
 sudo ./install.sh --yes
@@ -283,4 +285,14 @@ sudo ./install.sh --reconfigure
 
 # Force re-download Go and re-clone repo (e.g. Go version pinned upgrade)
 sudo ./install.sh --reinstall
+```
+
+## 9. Uninstall Comment
+```bash
+# Download and run uninstall script
+curl -fsSL https://raw.githubusercontent.com/Cal4Care-Developers/proxytunnel/master/uninstall.sh -o /tmp/uninstall.sh
+
+chmod +x /tmp/uninstall.sh
+
+sudo /tmp/uninstall.sh
 ```
