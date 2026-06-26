@@ -3,20 +3,18 @@
 
 ## Installation Comment
 
-``` installation comment
-
-### First install -- interactive prompts
+```bash
+# First install -- interactive prompts
 sudo ./install.sh
 
-### Re-run after partial failure -- uses existing config, skips unchanged steps
+# Re-run after partial failure -- uses existing config, skips unchanged steps
 sudo ./install.sh --yes
 
-### Change PBX domain or auth-key -- re-prompts everything
+# Change PBX domain or auth-key -- re-prompts everything
 sudo ./install.sh --reconfigure
 
-### Force re-download Go and re-clone repo (e.g. Go version pinned upgrade)
+# Force re-download Go and re-clone repo (e.g. Go version pinned upgrade)
 sudo ./install.sh --reinstall
-
 ```
 
 ## 1. Authentication Model
