@@ -1,14 +1,18 @@
-# First install -- interactive prompts
+``` installation comment
+
+### First install -- interactive prompts
 sudo ./install.sh
 
-# Re-run after partial failure -- uses existing config, skips unchanged steps
+### Re-run after partial failure -- uses existing config, skips unchanged steps
 sudo ./install.sh --yes
 
-# Change PBX domain or auth-key -- re-prompts everything
+### Change PBX domain or auth-key -- re-prompts everything
 sudo ./install.sh --reconfigure
 
-# Force re-download Go and re-clone repo (e.g. Go version pinned upgrade)
+### Force re-download Go and re-clone repo (e.g. Go version pinned upgrade)
 sudo ./install.sh --reinstall
+
+```
 
 # RingQ NX Device Proxy -- Complete Architecture Guide
 
@@ -16,7 +20,7 @@ sudo ./install.sh --reinstall
 
 The NX Device POSTs to `https://<pbx-domain>:8443/tunnel/bind` with:
 
-## json
+``` json
 
 {
   "auth_key":        "R1_2T8cPh...",
@@ -24,6 +28,8 @@ The NX Device POSTs to `https://<pbx-domain>:8443/tunnel/bind` with:
   "device_public_ip":"43.225.164.198",
   "device_local_ip": "192.168.10.130"
 }
+
+```
 
 The PBX (RingQ) queries:
 ```sql
