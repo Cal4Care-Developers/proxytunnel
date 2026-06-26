@@ -1,22 +1,6 @@
 # RingQ NX Device Proxy -- Complete Architecture Guide
 
 
-## Installation Comment
-
-```bash
-# First install -- interactive prompts
-sudo ./install.sh
-
-# Re-run after partial failure -- uses existing config, skips unchanged steps
-sudo ./install.sh --yes
-
-# Change PBX domain or auth-key -- re-prompts everything
-sudo ./install.sh --reconfigure
-
-# Force re-download Go and re-clone repo (e.g. Go version pinned upgrade)
-sudo ./install.sh --reinstall
-```
-
 ## 1. Authentication Model
 
 The NX Device POSTs to `https://<pbx-domain>:8443/tunnel/bind` with:
@@ -281,3 +265,19 @@ Ensure:
 - **No STUN server** -- the proxy detects its public IP via the bind API response
 - **No OpenVPN / IPSec** -- the TCP/6010 tunnel IS the secure channel
 - **No port-forwarding for phones** -- phones talk to the NX Device on the LAN only
+
+## Installation Comment
+
+```bash
+# First install -- interactive prompts
+sudo ./install.sh
+
+# Re-run after partial failure -- uses existing config, skips unchanged steps
+sudo ./install.sh --yes
+
+# Change PBX domain or auth-key -- re-prompts everything
+sudo ./install.sh --reconfigure
+
+# Force re-download Go and re-clone repo (e.g. Go version pinned upgrade)
+sudo ./install.sh --reinstall
+```
