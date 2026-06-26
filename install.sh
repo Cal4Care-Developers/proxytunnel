@@ -299,7 +299,49 @@ if [[ ${#NEED_PKG[@]} -gt 0 ]]; then
     ok "Packages installed: ${NEED_PKG[*]}"
 fi
 
-# -- Go installation -------------------------------------------------------
+# -- Probe repo: decide if we need Go before installing it ----------------
+section "Repository Probe"
+INSTALL_PHASE="repo-probe"
+
+REPO_HAS_BINARY=false
+REPO_HAS_SOURCE=false
+
+info "Probing repository contents..."
+PROBE_DIR="/tmp/ringqproxy-probe"
+rm -rf "${PROBE_DIR}"
+
+# Shallow clone with no working tree -- just read the index (fast, ~1s)
+git clone --depth 1 --no-checkout --quiet "${REPO_URL}" "${PROBE_DIR}" 2>/dev/null || {
+    warn "Could not probe repo -- will assume source build (Go required)"
+}
+
+if [[ -d "${PROBE_DIR}/.git" ]]; then
+    # Check what files exist in the repo index
+    REPO_FILES=$(git -C "${PROBE_DIR}" ls-tree -r HEAD --name-only 2>/dev/null || echo "")
+
+    # Is there a pre-built binary?
+    if echo "${REPO_FILES}" | grep -qE "^(${BINARY_NAME}|bin/${BINARY_NAME})$"; then
+        REPO_HAS_BINARY=true
+    fi
+    # Are there Go source files?
+    if echo "${REPO_FILES}" | grep -q "\.go$"; then
+        REPO_HAS_SOURCE=true
+    fi
+fi
+rm -rf "${PROBE_DIR}"
+
+if $REPO_HAS_BINARY && ! $REPO_HAS_SOURCE; then
+    ok "Repo contains pre-built binary -- Go installation NOT required"
+    NEED_GO=false
+elif $REPO_HAS_SOURCE; then
+    ok "Repo contains Go source files -- Go installation required"
+    NEED_GO=true
+else
+    warn "Could not determine repo contents -- installing Go as precaution"
+    NEED_GO=true
+fi
+
+# -- Go installation (skipped when pre-built binary is available) ----------
 section "Go Language Runtime"
 INSTALL_PHASE="go-install"
 
@@ -310,14 +352,16 @@ export GOMODCACHE="${GOPATH}/pkg/mod"
 go_version_ok() {
     command -v go &>/dev/null || return 1
     local cur
-    cur=$(go version 2>/dev/null | grep -oP 'go\K\d+\.\d+' | head -1)
+    cur=$(go version 2>/dev/null | grep -oP "go\K\d+\.\d+" | head -1)
     local maj min
     maj=$(echo "$cur" | cut -d. -f1)
     min=$(echo "$cur" | cut -d. -f2)
     (( maj > GO_MIN_MAJOR )) || (( maj == GO_MIN_MAJOR && min >= GO_MIN_MINOR ))
 }
 
-if go_version_ok && ! $OPT_REINSTALL; then
+if ! $NEED_GO; then
+    skip "Go runtime (not needed -- using pre-built binary from repo)"
+elif go_version_ok && ! $OPT_REINSTALL; then
     GO_VER=$(go version | awk '{print $3}')
     skip "Go ${GO_VER} already installed (meets minimum ${GO_MIN_MAJOR}.${GO_MIN_MINOR})"
 else
@@ -337,17 +381,14 @@ else
     tar -C /usr/local -xzf "${GO_TMP}"
     rm -f "${GO_TMP}"
     ok "Go ${GO_INSTALL_VERSION} installed to /usr/local/go"
+    GO_ACTIVE=$(go version | awk '{print $3}')
+    ok "Active Go runtime: ${GO_ACTIVE}"
+
+    # Persist PATH
+    grep -q '/usr/local/go/bin' /root/.bashrc 2>/dev/null || {
+        printf "\nexport PATH=/usr/local/go/bin:\$PATH\nexport GOPATH=/root/go\n" >> /root/.bashrc
+    }
 fi
-
-# Verify Go works (do NOT pipe to xargs -- shell functions can't be called via xargs)
-go_version_ok || { error "Go not functional after install"; exit 1; }
-GO_ACTIVE=$(go version | awk '{print $3}')
-ok "Active Go runtime: ${GO_ACTIVE}"
-
-# Persist PATH
-grep -q '/usr/local/go/bin' /root/.bashrc 2>/dev/null || {
-    printf '\nexport PATH="/usr/local/go/bin:$PATH"\nexport GOPATH="/root/go"\n' >> /root/.bashrc
-}
 
 # -- Create install directory ----------------------------------------------
 section "Install Directory"
