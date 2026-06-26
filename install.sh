@@ -770,7 +770,7 @@ echo -e "  Advanced : ${YELLOW}$0 --advanced --reconfigure${NC}"
 echo ""
 echo -e "${BOLD}Phone provisioning:${NC}"
 echo -e "  SIP Server  : ${YELLOW}${LAN_IP}${NC}  (port ${UDP_PORT} UDP)"
-echo -e "  SIP Domain  : ${YELLOW}${PBX_DOMAIN}${NC}"
+echo -e "  SIP Domain  : ${YELLOW}${LAN_IP}${NC}"
 echo ""
 
 flock -u 200
