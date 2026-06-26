@@ -1,3 +1,8 @@
+# RingQ NX Device Proxy -- Complete Architecture Guide
+
+
+## Installation Comment
+
 ``` installation comment
 
 ### First install -- interactive prompts
@@ -13,8 +18,6 @@ sudo ./install.sh --reconfigure
 sudo ./install.sh --reinstall
 
 ```
-
-# RingQ NX Device Proxy -- Complete Architecture Guide
 
 ## 1. Authentication Model
 
