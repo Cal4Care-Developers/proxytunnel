@@ -266,7 +266,7 @@ Ensure:
 - **No OpenVPN / IPSec** -- the TCP/6010 tunnel IS the secure channel
 - **No port-forwarding for phones** -- phones talk to the NX Device on the LAN only
 
-## Installation Comment
+## 8. Installation Comment
 
 ```bash
 # First install -- interactive prompts
