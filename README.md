@@ -255,12 +255,10 @@ INSERT INTO tunnel_config (
 );
 ```
 
-Or use the RingQ web portal under **Devices -> NX Devices -> Add**.
+Or use the RingQ web portal under **Settings -> Call Flow -> Add Tunnel (last icon)**.
 
 
 ### 6.5 RingQ SIP Profile (verify TCP is enabled)
-
-In RingQ web: **Settings -> Call Flow -> Add Tunnel (last icon)**
 
 Ensure:
 - `tcp-port` = 5060 (or 6010 if direct, without DNAT)
