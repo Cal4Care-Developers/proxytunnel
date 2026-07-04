@@ -1,4 +1,4 @@
-# RingQ Tunnel -- Complete Architecture Guide
+# RingQ NX Device Proxy -- Complete Architecture Guide
 
 
 ## 1. Authentication Model
@@ -295,4 +295,16 @@ curl -fsSL https://raw.githubusercontent.com/Cal4Care-Developers/proxytunnel/mas
 chmod +x /tmp/uninstall.sh
 
 sudo /tmp/uninstall.sh
+```
+
+## 10. Check status
+```bash
+# one-shot status
+ringqtunnel-status
+
+# live refresh every 5s
+ringqtunnel-status --watch
+
+# JSON for portal/monitoring
+ringqtunnel-status --json
 ```
