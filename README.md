@@ -301,10 +301,4 @@ sudo /tmp/uninstall.sh
 ```bash
 # one-shot status
 ringqtunnel-status
-
-# live refresh every 5s
-ringqtunnel-status --watch
-
-# JSON for portal/monitoring
-ringqtunnel-status --json
 ```
