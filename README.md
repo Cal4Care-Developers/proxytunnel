@@ -278,13 +278,13 @@ chmod +x /tmp/install.sh
 sudo /tmp/install.sh
 
 # Re-run after partial failure -- uses existing config, skips unchanged steps
-sudo ./install.sh --yes
+sudo /tmp/install.sh --yes
 
 # Change PBX domain or auth-key -- re-prompts everything
-sudo ./install.sh --reconfigure
+sudo /tmp/install.sh --reconfigure
 
 # Force re-download Go and re-clone repo (e.g. Go version pinned upgrade)
-sudo ./install.sh --reinstall
+sudo /tmp/install.sh --reinstall
 ```
 
 ## 9. Uninstall Comment
