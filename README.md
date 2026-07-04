@@ -1,4 +1,4 @@
-# RingQ NX Device Proxy -- Complete Architecture Guide
+# RingQ Linux Tunnel -- Complete Architecture Guide
 
 
 ## 1. Authentication Model
