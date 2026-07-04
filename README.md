@@ -1,4 +1,11 @@
-# RingQ NX Device Proxy -- Complete Architecture Guide
+  ____  _             _____                       _
+ |  _ \(_)_ __   __ _|_   _|   _ _ __  _ __   ___| |
+ | |_) | | '_ \ / _` | | || | | | '_ \| '_ \ / _ \ |
+ |  _ <| | | | | (_| | | || |_| | | | | | | |  __/ |
+ |_| \_\_|_| |_|\__, | |_| \__,_|_| |_|_| |_|\___|_|
+                |___/
+
+# RingQ Tunnel -- Complete Architecture Guide
 
 
 ## 1. Authentication Model
