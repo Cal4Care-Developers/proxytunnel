@@ -302,3 +302,54 @@ sudo /tmp/uninstall.sh
 # one-shot status
 ringqtunnel-status
 ```
+
+## 11. Troubleshooting
+```bash
+# Check fail2ban is running and list active jails
+sudo fail2ban-client status
+# Search all jails at once for your public IP
+for jail in freeswitch-404 freeswitch-reg sip-auth-failure sip-invite; do
+  echo "== $jail =="
+  sudo fail2ban-client status $jail | grep -A5 "Banned IP list"
+done
+# Directly grep your IP across all jails
+sudo fail2ban-client banned 43.225.164.198
+# If banned, unban manually
+sudo fail2ban-client set <jail-name> unbanip 43.225.164.198
+# Check the fail2ban log directly for your IP/timeframe
+sudo grep "43.225.164.198" /var/log/fail2ban.log
+# If it's not fail2ban but iptables/ipset directly (some PBX platforms use ipset instead)
+sudo iptables -L -n -v | grep 43.225.164.198
+sudo ipset list | grep 43.225.164.198
+# On the PBX box first:
+sudo tcpdump -i any port 6010 -n -vv
+# On SBC
+nc -vz -w5 team.ringq.ai 6010
+# Check if anything is actually listening on 6010 on this box
+sudo ss -tlnp | grep 6010
+or
+sudo netstat -tlnp | grep 6010
+# Check local firewall rules for a silent DROP on 6010
+sudo iptables -L -n -v --line-numbers | grep -i 6010
+sudo iptables -S | grep 6010
+# Check FreeSWITCH's sofia profile config directly
+sudo fs_cli -x "sofia status"
+sudo fs_cli -x "sofia profile <profile_name> restart"
+# Check the NAT table for a forwarding rule:
+sudo iptables -t nat -L -n -v --line-numbers | grep -i 6010
+sudo iptables -t nat -S | grep 6010
+# Also check the full NAT table to see what pattern the other working tenants use (so we can replicate it for this one):
+sudo iptables -t nat -L PREROUTING -n -v --line-numbers
+# delete rule bad one and the redundant duplicate rule
+sudo iptables -t nat -D PREROUTING 3
+sudo iptables-save > /etc/iptables/rules.v4
+# After delete and can verify
+sudo iptables -t nat -L PREROUTING -n -v --line-numbers | grep -i 6010
+# Build and Manullay run RingQ Tunnel
+go build -o sipproxy .
+./sipproxy -c sip-proxy.yaml --log-level Debug
+# Realtime watch Extension Registration
+watch -n 10 'fs_cli -x "sofia status profile internal reg" | grep -E "User:|Status:|Ping-Status:|Ping-Time:|EXPSECS"'
+# check service log
+journalctl -u ringqproxy -f
+```
