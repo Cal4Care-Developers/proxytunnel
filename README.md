@@ -2,7 +2,7 @@
 
 ## 1. Authentication Model
 
-The NX Device POSTs to `https://<pbx-domain>:443/tunnel/bind` with:
+The RingQ Tunnel POSTs to `https://<pbx-domain>:443/sbc/tunnel/bind` with:
 
 ``` json
 {
@@ -46,15 +46,15 @@ Two completely separate internet paths exist between NX Device and PBX:
       │   to 192.168.x.x:40000-41999               └─────────┬───────────┘
       │   (to NX relay,                                       │
       │    LAN only, no internet)                             ▼
-      ▼                                                FreeSWITCH
+      ▼                                                     RingQ
  +------------------+   ③ TCP/6010 ═══════════════► 172.16.x.x:5060
- │ NX Device Proxy  │══════════════════════════════  (SIP only, all messages)
+ │ RingQ Tunnel     │══════════════════════════════  (SIP only, all messages)
  │ LAN:192.168.x.x  │
  │ WAN:43.225.x.x   │   ④ UDP direct ──────────────► FS RTP port
  │                  │─────────────────────────────►  16384-32768
  │  SIP proxy       │   src: 43.225.x.x:wanPort      (voice audio)
  │  RTP relay:      │   dst: FS_IP:FS_RTP_port
- │   lanHalf←phones │   NOT through TCP/6010
+ │   lanHalf←phones │   
  │   wanHalf──────► │
  +------------------+
 ```
@@ -92,10 +92,10 @@ Only NX Device sends RTP to PBX — phones never send directly to PBX.
 | Port        | Protocol | Direction                  | Purpose                            |
 |-------------|----------|----------------------------|------------------------------------|
 | 6010        | TCP      | Inbound                    | NX Device tunnel connections       |
-| 5060        | TCP/UDP  | Internal                   | FreeSWITCH SIP (behind firewall)   |
+| 5060        | TCP/UDP  | Internal                   | RingQ SIP (behind firewall)   |
 | 443         | TCP      | Inbound                    | RingQ REST API                     |
 
-> **Note**: RTP media from phones is relayed through the NX Device proxy.
+> **Note**: RTP media from phones is relayed through the RingQ Tunnel.
 > The PBX only needs to accept UDP from the NX Device's public IP — not from all internet.
 
 ---
