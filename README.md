@@ -2,7 +2,7 @@
 
 ## 1. Authentication Model
 
-The NX Device POSTs to `https://<pbx-domain>:8443/tunnel/bind` with:
+The NX Device POSTs to `https://<pbx-domain>:443/tunnel/bind` with:
 
 ``` json
 {
@@ -39,7 +39,7 @@ Two completely separate internet paths exist between NX Device and PBX:
  192.168.x.x                                       │                     │
       │                                            │ MUST ALLOW:         │
       │ ① SIP UDP/5060                             │  TCP 6010 ✓         │
-      │   (to NX Device,                           │  TCP 8443 ✓         │
+      │   (to NX Device,                           │  TCP 443 ✓          │
       │    LAN only)                               │  UDP 16384-32768    │
       │                                            │  FROM 43.225.x.x ✓ │
       │ ② RTP UDP                                  │  (NX Device IP)     │
@@ -84,8 +84,7 @@ Only NX Device sends RTP to PBX — phones never send directly to PBX.
 | 8899          | TCP      | Inbound   | Admin API (local LAN only)           |
 | 40000–41999   | UDP      | Inbound   | RTP relay — LAN phones send audio here |
 | 6010          | TCP      | Outbound  | SIP tunnel to Cloud PBX              |
-| 8443          | TCP      | Outbound  | REST API to Cloud PBX (bind/HB)      |
-| 443           | TCP      | Outbound  | HTTPS for RingQ portal               |
+| 443           | TCP      | Outbound  | HTTPS — REST API to Cloud PBX (bind/HB) + RingQ portal |
 | 40000–41999   | UDP      | Outbound  | RTP relay — proxy forwards audio to PBX |
 
 ### Cloud PBX (RingQ server)
@@ -94,7 +93,7 @@ Only NX Device sends RTP to PBX — phones never send directly to PBX.
 |-------------|----------|----------------------------|------------------------------------|
 | 6010        | TCP      | Inbound                    | NX Device tunnel connections       |
 | 5060        | TCP/UDP  | Internal                   | FreeSWITCH SIP (behind firewall)   |
-| 8443        | TCP      | Inbound                    | RingQ REST API                     |
+| 443         | TCP      | Inbound                    | RingQ REST API                     |
 
 > **Note**: RTP media from phones is relayed through the NX Device proxy.
 > The PBX only needs to accept UDP from the NX Device's public IP — not from all internet.
@@ -210,7 +209,7 @@ Open these ports **inbound** to your PBX server:
 
 ```
 TCP  6010   from 0.0.0.0/0            (NX Device SIP tunnel)
-TCP  8443   from 0.0.0.0/0            (NX Device REST API / heartbeat)
+TCP  443    from 0.0.0.0/0            (NX Device REST API / heartbeat)
 ```
 
 ### 6.2 PBX Server Rules — run `pbx-setup.sh`
