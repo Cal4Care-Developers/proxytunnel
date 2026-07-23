@@ -2,7 +2,7 @@
 
 ## 1. Authentication Model
 
-The NX Device POSTs to `https://<pbx-domain>:443/tunnel/bind` with:
+The NX Device POSTs to `https://<pbx-domain>:443/sbc/tunnel/bind` with:
 
 ``` json
 {
@@ -250,7 +250,7 @@ Or use the RingQ web portal under **Settings → Tunnel Connections → Add Tunn
 ### 6.4 Heartbeat API — portal must return 401/403 for revoked keys
 
 ```
-POST /tunnel/heartbeat
+POST /sbc/tunnel/heartbeat
 Body: {"auth_key": "...", "device_id": "..."}
 
 Valid key   → HTTP 200 (update last_seen only — never write auth_key from request)
