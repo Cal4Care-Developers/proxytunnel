@@ -2,7 +2,7 @@
 
 ## 1. Authentication Model
 
-The RingQ Tunnel POSTs to `https://<pbx-domain>:443/sbc/tunnel/bind` with:
+The NX Device POSTs to `https://<pbx-domain>:443/tunnel/bind` with:
 
 ``` json
 {
@@ -46,9 +46,9 @@ Two completely separate internet paths exist between NX Device and PBX:
       │   to 192.168.x.x:40000-41999               └─────────┬───────────┘
       │   (to NX relay,                                       │
       │    LAN only, no internet)                             ▼
-      ▼                                                     RingQ
+      ▼                                                RingQ
  +------------------+   ③ TCP/6010 ═══════════════► 172.16.x.x:5060
- │ RingQ Tunnel     │══════════════════════════════  (SIP only, all messages)
+ │ NX Device Proxy  │══════════════════════════════  (SIP only, all messages)
  │ LAN:192.168.x.x  │
  │ WAN:43.225.x.x   │   ④ UDP direct ──────────────► FS RTP port
  │                  │─────────────────────────────►  16384-32768
@@ -60,7 +60,7 @@ Two completely separate internet paths exist between NX Device and PBX:
 ```
 
 **Critical requirement**: If the cloud security group blocks UDP 16384-32768
-from NX Device IP, RTP path ④ cannot reach FreeSWITCH and there will be no
+from NX Device IP, RTP path ④ cannot reach RingQ and there will be no
 voice. OS-level iptables rules alone are not enough — the cloud provider
 firewall must also allow it.
 
@@ -95,7 +95,7 @@ Only NX Device sends RTP to PBX — phones never send directly to PBX.
 | 5060        | TCP/UDP  | Internal                   | RingQ SIP (behind firewall)   |
 | 443         | TCP      | Inbound                    | RingQ REST API                     |
 
-> **Note**: RTP media from phones is relayed through the RingQ Tunnel.
+> **Note**: RTP media from phones is relayed through the NX Device proxy.
 > The PBX only needs to accept UDP from the NX Device's public IP — not from all internet.
 
 ---
@@ -164,7 +164,7 @@ Phone A              NX Device Proxy (RTP relay)      Cloud PBX (FS)
 > TCP/6010 tunnel. RTP travels as direct internet UDP from wanHalf to FS's RTP port.
 >
 > **Cross-socket write**: phone audio received on `lanHalf (P1)` is forwarded to PBX
-> **using `wanHalf.conn (P2)`** as the source. FreeSWITCH always sees one consistent
+> **using `wanHalf.conn (P2)`** as the source. RingQ always sees one consistent
 > source port (P2 = wanHalf) for both hole-punch and audio — prevents FS symmetric-RTP
 > from redirecting audio away from wanHalf.
 
@@ -222,7 +222,7 @@ sudo bash pbx-setup.sh
 
 It sets up:
 1. `INPUT tcp/6010` — NX Device SIP tunnel
-2. `DNAT tcp/6010 → FS_internal:5060` — route tunnel to FreeSWITCH
+2. `DNAT tcp/6010 → FS_internal:5060` — route tunnel to RingQ
 3. `FORWARD tcp → FS_internal:5060` — allow forwarded traffic
 4. `INPUT udp from <NX_PUBLIC_IP>` — allow NX Device RTP media relay
 
@@ -278,7 +278,7 @@ The proxy uses two UDP sockets per call leg:
 | lanHalf   | P1 (even)| LAN phone| Receives phone RTP; writes to PBX via wanHalf.conn |
 | wanHalf   | P2 (odd) | Cloud PBX| Receives PBX RTP; forwards to phone. Hole-punch source. |
 
-**Cross-socket write** (critical for FreeSWITCH compatibility):
+**Cross-socket write** (critical for RingQ compatibility):
 - Phone audio arrives at `lanHalf (P1)`
 - It is forwarded to PBX using `wanHalf.conn (P2)` as the source
 - FS always sees one consistent source (P2) → symmetric-RTP stays stable
@@ -366,12 +366,16 @@ watch -n 10 'fs_cli -x "sofia status profile internal reg" | grep -E "User:|Stat
 # Check active calls + codecs (PBX)
 fs_cli -x "show channels"
 
-# Check FreeSWITCH RTP config (PBX)
+# Check RingQ RTP config (PBX)
 fs_cli -x "sofia status profile internal" | grep -iE "rtp|ext|ip"
 
 # Fail2ban — unban NX Device if accidentally blocked (PBX)
 sudo fail2ban-client banned <NX_PUBLIC_IP>
 sudo fail2ban-client set <jail-name> unbanip <NX_PUBLIC_IP>
+
+# Find FS internal IP
+FS_INTERNAL_IP=$(fs_cli -x 'sofia status' 2>/dev/null | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1 || echo "127.0.0.1")
+echo "FreeSWITCH internal IP detected: ${FS_INTERNAL_IP}"
 
 # Check the NAT table for a forwarding rule:
 sudo iptables -t nat -L -n -v --line-numbers | grep -i 6010
