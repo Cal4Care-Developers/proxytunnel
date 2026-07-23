@@ -375,7 +375,7 @@ sudo fail2ban-client set <jail-name> unbanip <NX_PUBLIC_IP>
 
 # Find FS internal IP
 FS_INTERNAL_IP=$(fs_cli -x 'sofia status' 2>/dev/null | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1 || echo "127.0.0.1")
-echo "FreeSWITCH internal IP detected: ${FS_INTERNAL_IP}"
+echo "FS internal IP detected: ${FS_INTERNAL_IP}"
 
 # Check the NAT table for a forwarding rule:
 sudo iptables -t nat -L -n -v --line-numbers | grep -i 6010
