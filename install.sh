@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# RingQ NX Device Proxy -- Idempotent Production Installer  v3.1
+# RingQ Tunnel -- Idempotent Production Installer  v3.2
 # =============================================================================
 # REQUIRED input (2 values only):
 #   1. PBX Domain    (e.g. customer.ringq.ai)
@@ -85,7 +85,7 @@ cat << 'EOF'
  |  _ <| | | | | (_| | | || |_| | | | | | | |  __/ |
  |_| \_\_|_| |_|\__, | |_| \__,_|_| |_|_| |_|\___|_|
                 |___/
-  Tunnel Installer  v3.1
+  Tunnel Installer  v3.2
 EOF
 echo -e "${NC}"
 
