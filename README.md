@@ -345,7 +345,13 @@ ringqtunnel-status --watch
 ringqtunnel-status --json
 ```
 
-## 12. Troubleshooting
+## 12. NX device installation
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Cal4Care-Developers/proxytunnel/master/nxdevice/setup-provision-api.sh -o /tmp/setup.sh && chmod +x /tmp/setup.sh && sudo /tmp/setup.sh
+```
+
+## 13. Troubleshooting
 
 ```bash
 # Service logs (real-time)
